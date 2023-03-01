@@ -249,7 +249,7 @@ if SERVER then
 		Warden.BackupCleanupAdd = Warden.BackupCleanupAdd or cleanup.Add
 		function cleanup.Add(ply, enttype, ent)
 			Warden.SetOwner(ent, ply)
-			Warden.BackupCleanupAdd(enttype, ent)
+			Warden.BackupCleanupAdd(ply, enttype, ent)
 		end
 
 		Warden.BackupUndoReplaceEntity = Warden.BackupUndoReplaceEntity or undo.ReplaceEntity
