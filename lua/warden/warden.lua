@@ -155,6 +155,10 @@ if SERVER then
 			Warden.Players[ownership.steamid][index] = nil
 			Warden.Ownership[index] = nil
 		end
+
+		ent:SetNWString("Owner", nil)
+		ent:SetNWString("OwnerID", nil)
+		ent:SetNWEntity("OwnerEnt", nil)
 	end
 
 	function Warden.GetOwner(ent)
@@ -272,7 +276,7 @@ if SERVER then
 
 	hook.Add("EntityRemoved", "Warden", Warden.ClearOwner)
 
-	hook.Add("CanTool", "WardenCanTool", function(ply, tr, tool)
+	hook.Add("CanTool", "Warden", function(ply, tr, tool)
 		local ent = tr.Entity
 		if not IsValid(ent) and not ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
@@ -285,7 +289,7 @@ if SERVER then
 		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_TOOL)
 	end)
 
-	hook.Add("PhysgunPickup", "WardenPhysgunPickup", function(ply, ent)
+	hook.Add("PhysgunPickup", "Warden", function(ply, ent)
 		if ent:IsWorld() then return true end
 		if not IsValid(ply) then return false end
 
@@ -295,9 +299,12 @@ if SERVER then
 		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_PHYSGUN)
 	end)
 
-	hook.Add("GravGunPickupAllowed", "WardenGravGunPickupAllowed", function(ply, ent)
+	hook.Add("GravGunPickupAllowed", "Warden", function(ply, ent)
 		if ent:IsWorld() then return true end
 		if not IsValid(ply) then return false end
+
+		local owner = Warden.GetOwner(ent)
+		if owner and owner:IsWorld() then return true end
 
 		local override = hook.Run("WardenGravGunPickupAllowed", ply, ent)
 		if override ~= nil then return override end
@@ -305,9 +312,12 @@ if SERVER then
 		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_GRAVGUN)
 	end)
 
-	hook.Add("GravGunPunt", "WardenGravGunPunt", function(ply, ent)
+	hook.Add("GravGunPunt", "Warden", function(ply, ent)
 		if ent:IsWorld() then return true end
 		if not IsValid(ply) then return false end
+
+		local owner = Warden.GetOwner(ent)
+		if owner and owner:IsWorld() then return true end
 
 		local override = hook.Run("WardenGravGunPunt", ply, ent)
 		if override ~= nil then return override end
@@ -315,9 +325,12 @@ if SERVER then
 		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_GRAVGUN)
 	end)
 
-	hook.Add("PlayerUse", "WardenPlayerUse", function(ply, ent)
+	hook.Add("PlayerUse", "Warden", function(ply, ent)
 		if ent:IsWorld() then return true end
 		if not IsValid(ply) then return false end
+
+		local owner = Warden.GetOwner(ent)
+		if owner and owner:IsWorld() then return true end
 
 		local override = hook.Run("WardenPlayerUse", ply, ent)
 		if override ~= nil then return override end
@@ -325,17 +338,7 @@ if SERVER then
 		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_USE)
 	end)
 
-	hook.Add("PlayerUse", "WardenPlayerUse", function(ply, ent)
-		if ent:IsWorld() then return true end
-		if not IsValid(ply) then return false end
-
-		local override = hook.Run("WardenPlayerUse", ply, ent)
-		if override ~= nil then return override end
-
-		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_USE)
-	end)
-
-	hook.Add("EntityTakeDamage", "WardenEntityTakeDamage", function(ent, dmg)
+	hook.Add("EntityTakeDamage", "Warden", function(ent, dmg)
 		if ent:IsWorld() then return end
 		local override = hook.Run("WardenEntityTakeDamage", ent, dmg)
 		if override ~= nil then return override end
@@ -356,7 +359,7 @@ if SERVER then
 		return true
 	end)
 
-	hook.Add("CanProperty", "WardenCanProperty", function(ply, property, ent)
+	hook.Add("CanProperty", "Warden", function(ply, property, ent)
 		if ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
@@ -366,7 +369,7 @@ if SERVER then
 		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_TOOL)
 	end)
 
-	hook.Add("CanEditVariable", "WardenCanEditVariable", function(ent, ply, key, val, editor)
+	hook.Add("CanEditVariable", "Warden", function(ent, ply, key, val, editor)
 		if ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
@@ -376,7 +379,7 @@ if SERVER then
 		return Warden.CheckPermission(ply, ent, Warden.PERMISSION_TOOL)
 	end)
 
-	hook.Add("OnPhysgunReload", "WardenOnPhysgunReload", function(wep, ply)
+	hook.Add("OnPhysgunReload", "Warden", function(wep, ply)
 		local ent = ply:GetEyeTrace().Entity
 		if not IsValid(ent) then return false end
 
