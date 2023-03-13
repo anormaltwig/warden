@@ -90,7 +90,7 @@ if SERVER then
 	util.AddNetworkString("WardenInitialize")
 
 	local initialized = {}
-	net.Receive("WardenInitialize", "Warden", function(_, ply)
+	net.Receive("WardenInitialize", function(_, ply)
 		if initialized[ply] then return end
 		initialized[ply] = true
 
