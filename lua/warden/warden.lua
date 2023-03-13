@@ -245,6 +245,7 @@ if SERVER then
 
 	function Warden.FreezeEntities(steamid)
 		local tbl = Warden.Players[steamid]
+		local count = 0
 		if tbl then
 			for entIndex, _ in pairs(tbl) do
 				local ent = Entity(entIndex)
@@ -252,19 +253,22 @@ if SERVER then
 					local phys = ent:GetPhysicsObjectNum(i)
 					phys:EnableMotion(false)
 				end
+				count = count + 1
 			end
 		end
-		hook.Run("WardenFreeze", steamid)
+		hook.Run("WardenFreeze", steamid, count)
 	end
 
 	function Warden.CleanupEntities(steamid)
 		local tbl = Warden.Players[steamid]
+		local count
 		if tbl then
 			for entIndex, _ in pairs(tbl) do
 				Entity(entIndex):Remove()
 			end
+			count = count + 1
 		end
-		hook.Run("WardenCleanup", steamid)
+		hook.Run("WardenCleanup", steamid, count)
 	end
 
 	function Warden.FreezeDisconnected()
