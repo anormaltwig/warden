@@ -261,7 +261,7 @@ if SERVER then
 
 	function Warden.CleanupEntities(steamid)
 		local tbl = Warden.Players[steamid]
-		local count
+		local count = 0
 		if tbl then
 			for entIndex, _ in pairs(tbl) do
 				Entity(entIndex):Remove()
