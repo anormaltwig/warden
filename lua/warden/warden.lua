@@ -24,7 +24,7 @@ function Warden.GetPlayerFromSteamID(steamid)
 end
 
 function Warden.CheckPermission(ent, checkEnt, permission)
-	if not checkEnt or not (checkEnt:IsValid() or checkEnt:IsWorld()) then return false end
+	if not (IsValid(checkEnt) or checkEnt:IsWorld()) then return false end
 	if not ent then return false end
 	local receiver
 	if ent:IsPlayer() then
