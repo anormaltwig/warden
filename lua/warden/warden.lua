@@ -244,15 +244,25 @@ if SERVER then
 	end
 
 	function Warden.FreezeEntities(steamid)
-		for entIndex, _ in pairs(Warden.Players[steamid]) do
-			Entity(entIndex):AddFlags(FL_FROZEN)
+		local tbl = Warden.Players[steamid]
+		if tbl then
+			for entIndex, _ in pairs(tbl) do
+				local ent = Entity(entIndex)
+				for i = 0, ent:GetPhysicsObjectCount() - 1 do
+					local phys = ent:GetPhysicsObjectNum(i)
+					phys:EnableMotion(false)
+				end
+			end
 		end
 		hook.Run("WardenFreeze", steamid)
 	end
 
 	function Warden.CleanupEntities(steamid)
-		for entIndex, _ in pairs(Warden.Players[steamid]) do
-			Entity(entIndex):Remove()
+		local tbl = Warden.Players[steamid]
+		if tbl then
+			for entIndex, _ in pairs(tbl) do
+				Entity(entIndex):Remove()
+			end
 		end
 		hook.Run("WardenCleanup", steamid)
 	end
