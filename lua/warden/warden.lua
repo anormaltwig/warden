@@ -291,7 +291,7 @@ if SERVER then
 	end)
 
 	hook.Add("PhysgunPickup", "Warden", function(ply, ent)
-		if ent:IsWorld() then return true end
+		if ent and ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local override = hook.Run("WardenPhysgunPickup", ply, ent)
@@ -301,7 +301,7 @@ if SERVER then
 	end)
 
 	hook.Add("GravGunPickupAllowed", "Warden", function(ply, ent)
-		if ent:IsWorld() then return true end
+		if ent and ent:IsWorld() then return true end
 		if not IsValid(ply) then return false end
 
 		local owner = Warden.GetOwner(ent)
@@ -314,7 +314,7 @@ if SERVER then
 	end)
 
 	hook.Add("GravGunPunt", "Warden", function(ply, ent)
-		if ent:IsWorld() then return true end
+		if ent and ent:IsWorld() then return true end
 		if not IsValid(ply) then return false end
 
 		local owner = Warden.GetOwner(ent)
@@ -340,7 +340,7 @@ if SERVER then
 	end)
 
 	hook.Add("EntityTakeDamage", "Warden", function(ent, dmg)
-		if ent:IsWorld() then return end
+		if ent and ent:IsWorld() then return end
 		local override = hook.Run("WardenEntityTakeDamage", ent, dmg)
 		if override ~= nil then return override end
 
@@ -361,7 +361,7 @@ if SERVER then
 	end)
 
 	hook.Add("CanProperty", "Warden", function(ply, property, ent)
-		if ent:IsWorld() then return false end
+		if ent and ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local override = hook.Run("WardenCanProperty", ply, property, ent)
@@ -371,7 +371,7 @@ if SERVER then
 	end)
 
 	hook.Add("CanEditVariable", "Warden", function(ent, ply, key, val, editor)
-		if ent:IsWorld() then return false end
+		if ent and ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local override = hook.Run("WardenCanEditVariable", ent, ply, key, val, editor)
