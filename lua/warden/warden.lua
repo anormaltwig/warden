@@ -115,6 +115,7 @@ if SERVER then
 				end
 			end
 		end
+		net.Send(ply)
 	end)
 
 	Warden.Ownership = Warden.Ownership or {}
