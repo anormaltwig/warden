@@ -23,6 +23,11 @@ function Warden.GetPlayerFromSteamID(steamid)
 	return Warden.SteamIDMap[steamid]
 end
 
+function Warden.PlayerIsDisconnected(steamid)
+	local ply = Warden.GetPlayerFromSteamID(steamid)
+	return not ply or not ply:IsValid()
+end
+
 function Warden.CheckPermission(ent, checkEnt, permission)
 	if not (IsValid(checkEnt) or checkEnt:IsWorld()) then return false end
 	if not ent then return false end
@@ -79,10 +84,6 @@ function Warden.HasPermission(receiver, granter, permission)
 end
 
 gameevent.Listen("player_disconnect")
-hook.Add("player_disconnect", "WardenPlayerDisconnect", function(data)
-	local steamid = data.networkid
-	Warden.Permissions[steamid] = nil
-end)
 
 if SERVER then
 	util.AddNetworkString("WardenUpdatePermission")
@@ -173,6 +174,8 @@ if SERVER then
 				Warden.SetOwner(Entity(entIndex), ply)
 			end
 		end
+
+		timer.Remove("WardenCleanup#" .. ply:SteamID())
 	end)
 
 	net.Receive("WardenUpdatePermission", function(_, ply)
@@ -237,6 +240,50 @@ if SERVER then
 		else
 			Warden.Permissions[revoker:SteamID()][permission]["global"] = false
 			networkPermission(revoker, nil, permission, false)
+		end
+	end
+
+	function Warden.FreezeEntities(steamid)
+		local tbl = Warden.Players[steamid]
+		local count = 0
+		if tbl then
+			for entIndex, _ in pairs(tbl) do
+				local ent = Entity(entIndex)
+				for i = 0, ent:GetPhysicsObjectCount() - 1 do
+					local phys = ent:GetPhysicsObjectNum(i)
+					phys:EnableMotion(false)
+				end
+				count = count + 1
+			end
+		end
+		hook.Run("WardenFreeze", steamid, count)
+	end
+
+	function Warden.CleanupEntities(steamid)
+		local tbl = Warden.Players[steamid]
+		local count = 0
+		if tbl then
+			for entIndex, _ in pairs(tbl) do
+				Entity(entIndex):Remove()
+			end
+			count = count + 1
+		end
+		hook.Run("WardenCleanup", steamid, count)
+	end
+
+	function Warden.FreezeDisconnected()
+		for steamid, _ in pairs(Warden.Players) do
+			if Warden.PlayerIsDisconnected(steamid) then
+				Warden.FreezeEntities(steamid)
+			end
+		end
+	end
+
+	function Warden.CleanupDisconnected()
+		for steamid, _ in pairs(Warden.Players) do
+			if Warden.PlayerIsDisconnected(steamid) then
+				Warden.CleanupEntities(steamid)
+			end
 		end
 	end
 
@@ -392,6 +439,20 @@ if SERVER then
 		end
 	end)
 
+	hook.Add("player_disconnect", "WardenPlayerDisconnect", function(data)
+		local steamid = data.networkid
+		Warden.Permissions[steamid] = nil
+
+		if GetConVar("warden_freeze_disconnect"):GetBool() then
+			Warden.FreezeEntities(steamid)
+		end
+
+		if GetConVar("warden_cleanup_disconnect"):GetBool() then
+			local time = GetConVar("warden_cleanup_time"):GetInt()
+			timer.Create("WardenCleanup#" .. steamid, time, 1, function() Warden.CleanupEntities(steamid) end)
+		end
+	end)
+
 	return
 end
 
@@ -465,4 +526,9 @@ end
 function Warden.RevokePermission(receiver, permission)
 	networkPermission(receiver, permission, false)
 end
+
+hook.Add("player_disconnect", "WardenPlayerDisconnect", function(data)
+	local steamid = data.networkid
+	Warden.Permissions[steamid] = nil
+end)
 

@@ -1,5 +1,8 @@
 Warden = Warden or {}
 
+AddCSLuaFile("warden/convars.lua")
+include("warden/convars.lua")
+
 AddCSLuaFile("warden/permissions.lua")
 include("warden/permissions.lua")
 
