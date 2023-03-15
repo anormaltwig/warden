@@ -463,7 +463,7 @@ hook.Add("InitPostEntity", "Warden", function()
 	net.SendToServer()
 end)
 
-net.Receive("WardenInitialize", "Warden", function(_, ply)
+net.Receive("WardenInitialize", function(_, ply)
 	local n = net.ReadUInt(8)
 	for i = 1, n do
 		local granter = net.ReadString()
