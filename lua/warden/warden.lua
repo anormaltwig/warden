@@ -28,6 +28,15 @@ function Warden.PlayerIsDisconnected(steamid)
 	return not ply or not ply:IsValid()
 end
 
+local WorldEntityPermissions = {
+	[Warden.PERMISSION_ALL] = false,
+	[Warden.PERMISSION_PHYSGUN] = false,
+	[Warden.PERMISSION_GRAVGUN] = true,
+	[Warden.PERMISSION_TOOL] = false,
+	[Warden.PERMISSION_USE] = true,
+	[Warden.PERMISSION_DAMAGE] = true,
+}
+
 function Warden.CheckPermission(ent, checkEnt, permission)
 	if not (IsValid(checkEnt) or checkEnt:IsWorld()) then return false end
 	if not ent then return false end
@@ -36,8 +45,14 @@ function Warden.CheckPermission(ent, checkEnt, permission)
 		receiver = ent
 	else
 		local owner = Warden.GetOwner(ent)
-		if owner and owner:IsPlayer() then
-			receiver = owner
+		if owner then
+			if owner:IsPlayer() then
+				receiver = owner
+			elseif owner:IsWorld() then
+				return WorldEntityPermissions[permission]
+			else
+				return false
+			end
 		else
 			return false
 		end
@@ -155,7 +170,10 @@ if SERVER then
 		local index = ent:EntIndex()
 		local ownership = Warden.Ownership[index]
 		if ownership then
-			Warden.Players[ownership.steamid][index] = nil
+			if Warden.Players[ownership.steamid] then
+				Warden.Players[ownership.steamid][index] = nil
+			end
+
 			Warden.Ownership[index] = nil
 		end
 
@@ -168,6 +186,44 @@ if SERVER then
 		local ownership = Warden.Ownership[ent:EntIndex()]
 		return ownership and ownership.owner
 	end
+
+	function Warden.SetOwnerWorld(ent)
+		local world = game.GetWorld()
+
+		local index = ent:EntIndex()
+
+		-- Cleanup original ownership if has one
+		if Warden.Ownership[index] then
+			local lastOwner = Warden.Ownership[index]
+
+			if Warden.Players[lastOwner.steamid] then
+				Warden.Players[lastOwner.steamid][index] = nil
+			end
+		end
+
+		Warden.Ownership[index] = {
+			ent = ent,
+			owner = world,
+			steamid = "World",
+		}
+
+		ent:SetNWString("Owner", "World")
+		ent:SetNWString("OwnerID", "World")
+		ent:SetNWEntity("OwnerEnt", world)
+	end
+
+	-- Assign all unowned entities to world when map is loaded or cleaned
+	local function assignWorldEntities()
+		for _, ent in pairs(ents.GetAll()) do
+			if not Warden.GetOwner(ent) then
+				Warden.SetOwnerWorld(ent)
+			end
+		end
+	end
+	timer.Simple(10, assignWorldEntities)
+	hook.Add("PostCleanupMap", "Warden", function()
+		timer.Simple(0, assignWorldEntities)
+	end)
 
 	hook.Add("PlayerInitialSpawn", "Warden", function(ply)
 		if Warden.Players[ply:SteamID()] then
@@ -339,7 +395,7 @@ if SERVER then
 	end)
 
 	hook.Add("PhysgunPickup", "Warden", function(ply, ent)
-		if ent and ent:IsWorld() then return false end
+		if not ent or ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local override = hook.Run("WardenPhysgunPickup", ply, ent)
@@ -349,7 +405,7 @@ if SERVER then
 	end)
 
 	hook.Add("GravGunPickupAllowed", "Warden", function(ply, ent)
-		if ent and ent:IsWorld() then return true end
+		if not ent or ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local owner = Warden.GetOwner(ent)
@@ -362,7 +418,7 @@ if SERVER then
 	end)
 
 	hook.Add("GravGunPunt", "Warden", function(ply, ent)
-		if ent and ent:IsWorld() then return true end
+		if not ent or ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local owner = Warden.GetOwner(ent)
@@ -375,7 +431,7 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerUse", "Warden", function(ply, ent)
-		if ent:IsWorld() then return true end
+		if not ent or ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local owner = Warden.GetOwner(ent)
@@ -388,7 +444,7 @@ if SERVER then
 	end)
 
 	hook.Add("EntityTakeDamage", "Warden", function(ent, dmg)
-		if ent and ent:IsWorld() then return end
+		if not ent or ent:IsWorld() then return false end
 		local override = hook.Run("WardenEntityTakeDamage", ent, dmg)
 		if override ~= nil then return override end
 
@@ -409,7 +465,7 @@ if SERVER then
 	end)
 
 	hook.Add("CanProperty", "Warden", function(ply, property, ent)
-		if ent and ent:IsWorld() then return false end
+		if not ent or ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local override = hook.Run("WardenCanProperty", ply, property, ent)
@@ -419,7 +475,7 @@ if SERVER then
 	end)
 
 	hook.Add("CanEditVariable", "Warden", function(ent, ply, key, val, editor)
-		if ent and ent:IsWorld() then return false end
+		if not ent or ent:IsWorld() then return false end
 		if not IsValid(ply) then return false end
 
 		local override = hook.Run("WardenCanEditVariable", ent, ply, key, val, editor)
