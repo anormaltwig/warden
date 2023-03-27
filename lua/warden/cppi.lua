@@ -48,7 +48,11 @@ end
 
 if SERVER then
 	function entMeta:CPPISetOwner(ply)
-		return Warden.SetOwner(self, ply)
+		if ply then
+			return Warden.SetOwner(self, ply)
+		else
+			return Warden.ClearOwner(self)	
+		end
 	end
 
 	function entMeta:CPPISetOwnerUID()
