@@ -357,7 +357,9 @@ if SERVER then
 	if cleanup then
 		Warden.BackupCleanupAdd = Warden.BackupCleanupAdd or cleanup.Add
 		function cleanup.Add(ply, enttype, ent)
-			Warden.SetOwner(ent, ply)
+			if IsValid(ent) then
+				Warden.SetOwner(ent, ply)
+			end
 			Warden.BackupCleanupAdd(ply, enttype, ent)
 		end
 
