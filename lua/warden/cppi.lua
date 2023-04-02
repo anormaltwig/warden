@@ -39,7 +39,7 @@ function entMeta:CPPIGetOwner()
 	local ownerEnt = self:GetNWEntity("OwnerEnt")
 	local steamid = self:GetNWString("OwnerID")
 
-	if ownerEnt:IsValid() then
+	if ownerEnt:IsValid() or ownerEnt:IsWorld() then
 		return ownerEnt, steamid
 	elseif steamid ~= "" then
 		return nil, steamid
