@@ -60,29 +60,29 @@ if SERVER then
 	end
 
 	function entMeta:CPPICanTool(ply)
-		return Warden.CheckPermission(self, ply, Warden.PERMISSION_TOOL)
+		return Warden.CheckPermission(ply, self, Warden.PERMISSION_TOOL)
 	end
 	entMeta.CPPICanProperty = entMeta.CPPICanTool
 	entMeta.CPPICanEditVariable = entMeta.CPPICanTool
 
 	function entMeta:CPPICanPhysgun(ply)
-		return Warden.CheckPermission(self, ply, Warden.PERMISSION_PHYSGUN)
+		return Warden.CheckPermission(ply, self, Warden.PERMISSION_PHYSGUN)
 	end
 
 	function entMeta:CPPICanPickup(ply)
-		return Warden.CheckPermission(self, ply, Warden.PERMISSION_GRAVGUN)
+		return Warden.CheckPermission(ply, self, Warden.PERMISSION_GRAVGUN)
 	end
 	function entMeta:CPPICanPunt(ply)
-		return Warden.CheckPermission(self, ply, Warden.PERMISSION_GRAVGUN)
+		return Warden.CheckPermission(ply, self, Warden.PERMISSION_GRAVGUN)
 	end
 
 	function entMeta:CPPICanUse(ply)
-		return Warden.CheckPermission(self, ply, Warden.PERMISSION_USE)
+		return Warden.CheckPermission(ply, self, Warden.PERMISSION_USE)
 	end
 	entMeta.CPPIDrive = entMeta.CPPICanUse
 
 	function entMeta:CPPICanDamage(ply)
-		return Warden.CheckPermission(self, ply, Warden.PERMISSION_DAMAGE)
+		return Warden.CheckPermission(ply, self, Warden.PERMISSION_DAMAGE)
 	end
 end
 
