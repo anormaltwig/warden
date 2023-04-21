@@ -526,7 +526,7 @@ net.Receive("WardenInitialize", function(_, ply)
 	for i = 1, n do
 		local granter = net.ReadString()
 
-		local o = net.WriteUInt(8)
+		local o = net.ReadUInt(8)
 		for j = 1, o do
 			local permission = net.ReadUInt(8)
 
