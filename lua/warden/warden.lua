@@ -273,7 +273,7 @@ if SERVER then
 	end
 
 	function Warden.GrantPermission(granter, receiver, permission)
-		if not Warden.Permissions[granter] then
+		if not Warden.Permissions[granter:SteamID()] then
 			Warden.SetupPlayer(granter)
 		end
 
