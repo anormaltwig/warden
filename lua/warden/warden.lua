@@ -161,9 +161,9 @@ if SERVER then
 
 		Warden.Players[steamid][index] = true
 
-		ent:SetNWString("Owner", ply:Nick())
-		ent:SetNWString("OwnerID", ply:SteamID())
-		ent:SetNWEntity("OwnerEnt", ply)
+		ent:SetNW2String("Owner", ply:Nick())
+		ent:SetNW2String("OwnerID", ply:SteamID())
+		ent:SetNW2Entity("OwnerEnt", ply)
 	end
 
 	function Warden.ClearOwner(ent)
@@ -177,9 +177,9 @@ if SERVER then
 			Warden.Ownership[index] = nil
 		end
 
-		ent:SetNWString("Owner", nil)
-		ent:SetNWString("OwnerID", nil)
-		ent:SetNWEntity("OwnerEnt", nil)
+		ent:SetNW2String("Owner", nil)
+		ent:SetNW2String("OwnerID", nil)
+		ent:SetNW2Entity("OwnerEnt", nil)
 	end
 
 	function Warden.GetOwner(ent)
@@ -207,9 +207,9 @@ if SERVER then
 			steamid = "World",
 		}
 
-		ent:SetNWString("Owner", "World")
-		ent:SetNWString("OwnerID", "World")
-		ent:SetNWEntity("OwnerEnt", world)
+		ent:SetNW2String("Owner", "World")
+		ent:SetNW2String("OwnerID", "World")
+		ent:SetNW2Entity("OwnerEnt", world)
 	end
 
 	-- Assign all unowned entities to world when map is loaded or cleaned
