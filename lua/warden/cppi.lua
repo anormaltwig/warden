@@ -36,8 +36,8 @@ end
 local entMeta = FindMetaTable("Entity")
 
 function entMeta:CPPIGetOwner()
-	local ownerEnt = self:GetNWEntity("OwnerEnt")
-	local steamid = self:GetNWString("OwnerID")
+	local ownerEnt = self:GetNW2Entity("OwnerEnt")
+	local steamid = self:GetNW2String("OwnerID")
 
 	if ownerEnt:IsValid() or ownerEnt:IsWorld() then
 		return ownerEnt, steamid
