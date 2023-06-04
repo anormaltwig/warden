@@ -50,17 +50,15 @@ function Warden.CheckPermission(ent, checkEnt, permission)
 				receiver = owner
 			elseif owner:IsWorld() then
 				return WorldEntityPermissions[permission]
-			else
-				return false
 			end
-		else
-			return false
 		end
+		return false
 	end
 	if checkEnt:IsPlayer() then return Warden.HasPermission(receiver, checkEnt, permission) end
 
 	local owner = Warden.GetOwner(checkEnt)
-	if not IsValid(owner) then return false end
+	if not owner then return true end
+	if not owner:IsPlayer() then return false end
 
 	if not Warden.Permissions[owner:SteamID()] then
 		Warden.SetupPlayer(owner)
@@ -184,7 +182,7 @@ if SERVER then
 
 	function Warden.GetOwner(ent)
 		local ownership = Warden.Ownership[ent:EntIndex()]
-		return ownership and ownership.owner
+		return ownership and ownership.owner or nil
 	end
 
 	function Warden.SetOwnerWorld(ent)
