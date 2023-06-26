@@ -220,9 +220,19 @@ if SERVER then
 			end
 		end
 	end
+	--[[
 	timer.Simple(10, assignWorldEntities)
 	hook.Add("PostCleanupMap", "Warden", function()
 		timer.Simple(0, assignWorldEntities)
+	end)
+	]]
+
+	hook.Add("OnEntityCreated", "Warden", function(ent)
+		timer.Simple(0, function()
+			if ent:IsValid() and not Warden.GetOwner(ent) then
+				Warden.SetOwnerWorld(ent)
+			end
+		end)
 	end)
 
 	hook.Add("PlayerInitialSpawn", "Warden", function(ply)
@@ -292,10 +302,10 @@ if SERVER then
 		end
 
 		if IsValid(receiver) and receiver:IsPlayer() then
-			Warden.Permissions[revoker:SteamID()][permission][receiver:SteamID()] = false
+			Warden.Permissions[revoker:SteamID()][permission][receiver:SteamID()] = nil
 			networkPermission(revoker, receiver, permission, false)
 		else
-			Warden.Permissions[revoker:SteamID()][permission]["global"] = false
+			Warden.Permissions[revoker:SteamID()][permission]["global"] = nil
 			networkPermission(revoker, nil, permission, false)
 		end
 	end
@@ -347,29 +357,37 @@ if SERVER then
 	-- Assigning spawned props to their owners
 	local plyMeta = FindMetaTable("Player")
 	if plyMeta.AddCount then
-		Warden.BackupAddCount = Warden.BackupAddCount or plyMeta.AddCount
+		local backupPlyAddCount = plyMeta.AddCount
 		function plyMeta:AddCount(enttype, ent)
 			Warden.SetOwner(ent, self)
-			Warden.BackupAddCount(self, enttype, ent)
+			backupPlyAddCount(self, enttype, ent)
+		end
+	end
+	if plyMeta.AddCleanup then
+		local backupPlyAddCleanup = plyMeta.AddCleanup
+		function plyMeta:AddCleanup(enttype, ent)
+			Warden.SetOwner(ent, self)
+			backupPlyAddCleanup(self, enttype, ent)
 		end
 	end
 
 	if cleanup then
-		Warden.BackupCleanupAdd = Warden.BackupCleanupAdd or cleanup.Add
+		local backupCleanupAdd = cleanup.Add
 		function cleanup.Add(ply, enttype, ent)
 			if IsValid(ent) then
 				Warden.SetOwner(ent, ply)
 			end
-			Warden.BackupCleanupAdd(ply, enttype, ent)
+			backupCleanupAdd(ply, enttype, ent)
 		end
-
-		Warden.BackupUndoReplaceEntity = Warden.BackupUndoReplaceEntity or undo.ReplaceEntity
+	end
+	if undo then
+		local backupUndoReplaceEntity = undo.ReplaceEntity
 		function undo.ReplaceEntity(from, to)
 			if Warden.Ownership[from:EntIndex()] then
 				Warden.SetOwner(to, Warden.Ownership[from:EntIndex()].owner)
 			end
 
-			return Warden.BackupUndoReplaceEntity(from, to)
+			return backupUndoReplaceEntity(from, to)
 		end
 	end
 
@@ -446,9 +464,13 @@ if SERVER then
 	end)
 
 	hook.Add("EntityTakeDamage", "Warden", function(ent, dmg)
-		if not ent or ent:IsWorld() then return false end
+		if not ent or ent:IsWorld() then return end
+
 		local override = hook.Run("WardenEntityTakeDamage", ent, dmg)
 		if override ~= nil then return override end
+
+		local owner = Warden.GetOwner(ent)
+		if owner == game.GetWorld() then return end
 
 		local attacker = dmg:GetAttacker()
 		local inflictor = dmg:GetInflictor()
@@ -458,7 +480,6 @@ if SERVER then
 				return
 			end
 		elseif inflictor:IsValid() then
-			local owner = Warden.GetOwner(inflictor)
 			if owner and owner:IsPlayer() and Warden.CheckPermission(owner, ent, Warden.PERMISSION_DAMAGE) then
 				return
 			end
