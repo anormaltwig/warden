@@ -469,8 +469,7 @@ if SERVER then
 		local override = hook.Run("WardenEntityTakeDamage", ent, dmg)
 		if override ~= nil then return override end
 
-		local owner = Warden.GetOwner(ent)
-		if owner == game.GetWorld() then return end
+		if Warden.GetOwner(ent) == game.GetWorld() then return end
 
 		local attacker = dmg:GetAttacker()
 		local inflictor = dmg:GetInflictor()
@@ -480,6 +479,7 @@ if SERVER then
 				return
 			end
 		elseif inflictor:IsValid() then
+			local owner = Warden.GetOwner(inflictor)
 			if owner and owner:IsPlayer() and Warden.CheckPermission(owner, ent, Warden.PERMISSION_DAMAGE) then
 				return
 			end
