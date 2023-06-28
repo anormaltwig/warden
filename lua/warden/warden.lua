@@ -464,12 +464,11 @@ if SERVER then
 	end)
 
 	hook.Add("EntityTakeDamage", "Warden", function(ent, dmg)
-		if not ent or ent:IsWorld() then return end
-
 		local override = hook.Run("WardenEntityTakeDamage", ent, dmg)
 		if override ~= nil then return override end
 
-		if Warden.GetOwner(ent) == game.GetWorld() then return end
+		if not ent or ent:IsWorld() then return end
+		if not ent:IsPlayer() and Warden.GetOwner(ent) == game.GetWorld() then return end
 
 		local attacker = dmg:GetAttacker()
 		local inflictor = dmg:GetInflictor()
