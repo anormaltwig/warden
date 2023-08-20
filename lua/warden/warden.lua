@@ -137,6 +137,10 @@ if SERVER then
 	Warden.Players = Warden.Players or {}
 
 	function Warden.SetOwner(ent, ply)
+		if not IsValid(ent) or not IsValid(ply) then
+			return
+		end
+
 		local index = ent:EntIndex()
 		local steamid = ply:SteamID()
 
