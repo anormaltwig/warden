@@ -5,6 +5,7 @@ Warden.Permissions = Warden.Permissions or {}
 
 function Warden.CreatePermission(id, name, desc, priority)
 	local index = table.insert(Warden.PermissionList, {
+		id = id,
 		name = name,
 		description = desc,
 		priority = priority,

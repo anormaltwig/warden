@@ -34,7 +34,7 @@ function Warden.PlayerIsDisconnected(steamid)
 	return not IsValid(ply)
 end
 
-local WorldEntityPermissions = {
+local worldEntityPermissions = {
 	[Warden.PERMISSION_ALL] = false,
 	[Warden.PERMISSION_PHYSGUN] = false,
 	[Warden.PERMISSION_GRAVGUN] = true,
@@ -55,7 +55,7 @@ function Warden.CheckPermission(ent, checkEnt, permission)
 			if owner:IsPlayer() then
 				receiver = owner
 			elseif owner:IsWorld() then
-				return WorldEntityPermissions[permission]
+				return worldEntityPermissions[permission]
 			else
 				return false
 			end
@@ -88,11 +88,34 @@ function Warden.HasPermissionGlobal(ply, permission)
 	return Warden.Permissions[ply:SteamID()][permission].global or false
 end
 
+local adminPermissions = {
+	--[Warden.PERMISSION_ALL] = true,
+	[Warden.PERMISSION_PHYSGUN] = true,
+	[Warden.PERMISSION_GRAVGUN] = true,
+	--[Warden.PERMISSION_TOOL] = true,
+	[Warden.PERMISSION_USE] = true,
+	--[Warden.PERMISSION_DAMAGE] = true,
+}
+
+local function adminCheck(receiver, permission)
+	if not receiver:IsAdmin() then
+		return
+	end
+
+	return adminPermissions[permission]
+end
+
 function Warden.HasPermission(receiver, granter, permission)
 	if not Warden.Permissions[granter:SteamID()] then
 		Warden.SetupPlayer(granter)
 	end
-	if receiver == granter or receiver:IsAdmin() then return true end
+
+	local override = hook.Run("WardenCheckPermission", receiver, granter, permission)
+	if override ~= nil then
+		return override
+	end
+
+	if receiver == granter or granter:IsBot() or adminCheck(receiver, permission) then return true end
 
 	if permission ~= Warden.PERMISSION_ALL and Warden.HasPermission(receiver, granter, Warden.PERMISSION_ALL) then
 		return true
@@ -299,11 +322,16 @@ if SERVER then
 		end
 
 		if IsValid(receiver) and receiver:IsPlayer() then
-			hook.Run("WardenGrantPermission", granter, receiver, permission)
+			if Warden.Permissions[granter:SteamID()][permission]["global"] then
+				hook.Run("WardenRevokePermission", granter, receiver, Warden.PermissionList[permission].id)
+			else
+				hook.Run("WardenGrantPermission", granter, receiver, Warden.PermissionList[permission].id)
+			end
+
 			Warden.Permissions[granter:SteamID()][permission][receiver:SteamID()] = true
 			networkPermission(granter, receiver, permission, true)
 		else
-			hook.Run("WardenGrantPermissionGlobal", granter, permission)
+			hook.Run("WardenGrantPermissionGlobal", granter, Warden.PermissionList[permission].id)
 			Warden.Permissions[granter:SteamID()][permission]["global"] = true
 			networkPermission(granter, nil, permission, true)
 		end
@@ -315,11 +343,16 @@ if SERVER then
 		end
 
 		if IsValid(receiver) and receiver:IsPlayer() then
-			hook.Run("WardenRevokePermission", revoker, receiver, permission)
+			if Warden.Permissions[revoker:SteamID()][permission]["global"] then
+				hook.Run("WardenGrantPermission", revoker, receiver, Warden.PermissionList[permission].id)
+			else
+				hook.Run("WardenRevokePermission", revoker, receiver, Warden.PermissionList[permission].id)
+			end
+
 			Warden.Permissions[revoker:SteamID()][permission][receiver:SteamID()] = nil
 			networkPermission(revoker, receiver, permission, false)
 		else
-			hook.Run("WardenRevokePermissionGlobal", revoker, permission)
+			hook.Run("WardenRevokePermissionGlobal", revoker, Warden.PermissionList[permission].id)
 			Warden.Permissions[revoker:SteamID()][permission]["global"] = nil
 			networkPermission(revoker, nil, permission, false)
 		end
@@ -571,7 +604,11 @@ if SERVER then
 
 		if GetConVar("warden_cleanup_disconnect"):GetBool() then
 			local time = GetConVar("warden_cleanup_time"):GetInt()
-			timer.Create("WardenCleanup#" .. steamid, time, 1, function() Warden.CleanupEntities(steamid) end)
+			local name = data.name
+			timer.Create("WardenCleanup#" .. steamid, time, 1, function()
+				Warden.CleanupEntities(steamid)
+				hook.Run("WardenNaturalCleanup", name, time)
+			end)
 		end
 	end)
 
@@ -607,7 +644,7 @@ end)
 function Warden.GetOwnedEntities(steamid)
 	local ents = {}
 	for _, ent in ipairs(ents.GetAll()) do
-		if ent:GetNWString("OwnerID", "World") == steamid then
+		if ent:GetNWString("OwnerID", "") == steamid then
 			table.insert(ents, ent)
 		end
 	end
@@ -617,7 +654,7 @@ end
 function Warden.GetOwnedEntitiesByClass(steamid, class)
 	local ents = {}
 	for _, ent in ipairs(ents.FindByClass(class)) do
-		if ent:GetNWString("OwnerID", "World") == steamid then
+		if ent:GetNWString("OwnerID", "") == steamid then
 			table.insert(ents, ent)
 		end
 	end
