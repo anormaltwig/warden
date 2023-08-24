@@ -43,11 +43,24 @@ local worldEntityPermissions = {
 	[Warden.PERMISSION_DAMAGE] = true,
 }
 
+local adminPermissions = {
+	--[Warden.PERMISSION_ALL] = true,
+	[Warden.PERMISSION_PHYSGUN] = true,
+	[Warden.PERMISSION_GRAVGUN] = true,
+	--[Warden.PERMISSION_TOOL] = true,
+	[Warden.PERMISSION_USE] = true,
+	--[Warden.PERMISSION_DAMAGE] = true,
+}
+
 function Warden.CheckPermission(ent, checkEnt, permission)
 	if not (IsValid(checkEnt) or checkEnt:IsWorld()) then return false end
 	if not ent then return false end
 	local receiver
 	if ent:IsPlayer() then
+		if ent:IsAdmin() and adminPermissions[permission] then
+			return true
+		end
+
 		receiver = ent
 	else
 		local owner = Warden.GetOwner(ent)
@@ -64,7 +77,13 @@ function Warden.CheckPermission(ent, checkEnt, permission)
 		end
 	end
 
-	if checkEnt:IsPlayer() then return Warden.HasPermission(receiver, checkEnt, permission) end
+	if checkEnt:IsPlayer() then
+		if checkEnt:IsBot() then
+			return true
+		end
+
+		return Warden.HasPermission(receiver, checkEnt, permission)
+	end
 
 	local owner = Warden.GetOwner(checkEnt)
 	if not IsValid(owner) then return false end
@@ -88,23 +107,6 @@ function Warden.HasPermissionGlobal(ply, permission)
 	return Warden.Permissions[ply:SteamID()][permission].global or false
 end
 
-local adminPermissions = {
-	--[Warden.PERMISSION_ALL] = true,
-	[Warden.PERMISSION_PHYSGUN] = true,
-	[Warden.PERMISSION_GRAVGUN] = true,
-	--[Warden.PERMISSION_TOOL] = true,
-	[Warden.PERMISSION_USE] = true,
-	--[Warden.PERMISSION_DAMAGE] = true,
-}
-
-local function adminCheck(receiver, permission)
-	if not receiver:IsAdmin() then
-		return
-	end
-
-	return adminPermissions[permission]
-end
-
 function Warden.HasPermission(receiver, granter, permission)
 	if not Warden.Permissions[granter:SteamID()] then
 		Warden.SetupPlayer(granter)
@@ -115,7 +117,7 @@ function Warden.HasPermission(receiver, granter, permission)
 		return override
 	end
 
-	if receiver == granter or granter:IsBot() or adminCheck(receiver, permission) then return true end
+	if receiver == granter then return true end
 
 	if permission ~= Warden.PERMISSION_ALL and Warden.HasPermission(receiver, granter, Warden.PERMISSION_ALL) then
 		return true
