@@ -43,21 +43,25 @@ local worldEntityPermissions = {
 	[Warden.PERMISSION_DAMAGE] = true,
 }
 
-local adminPermissions = {
-	--[Warden.PERMISSION_ALL] = true,
-	[Warden.PERMISSION_PHYSGUN] = true,
-	[Warden.PERMISSION_GRAVGUN] = true,
-	--[Warden.PERMISSION_TOOL] = true,
-	[Warden.PERMISSION_USE] = true,
-	--[Warden.PERMISSION_DAMAGE] = true,
-}
+local function adminCheck(ply, permission)
+	if GetConVar("warden_admin_level_needs_admin"):GetBool() and not ply:IsAdmin() then
+		return
+	end
+
+	local permLevel = ply.WardenAdminLevel
+	if not permLevel then
+		permLevel = GetConVar("warden_default_admin_level"):GetInt()
+	end
+
+	return Warden.PermissionList[permission].adminLevel <= permLevel
+end
 
 function Warden.CheckPermission(ent, checkEnt, permission)
 	if not (IsValid(checkEnt) or checkEnt:IsWorld()) then return false end
 	if not ent then return false end
 	local receiver
 	if ent:IsPlayer() then
-		if ent:IsAdmin() and adminPermissions[permission] then
+		if adminCheck(ent, permission) then
 			return true
 		end
 
@@ -78,7 +82,7 @@ function Warden.CheckPermission(ent, checkEnt, permission)
 	end
 
 	if checkEnt:IsPlayer() then
-		if checkEnt:IsBot() then
+		if checkEnt:IsBot() and GetConVar("warden_always_target_bots"):GetBool() then
 			return true
 		end
 
@@ -325,7 +329,7 @@ if SERVER then
 
 		if IsValid(receiver) and receiver:IsPlayer() then
 			if Warden.Permissions[granter:SteamID()][permission]["global"] then
-				hook.Run("WardenRevokePermission", granter, receiver, Warden.PermissionList[permission].id)
+				hook.Run("WardenRevokePermission", granter, receiver, Warden.PermissionList[permission].id, true)
 			else
 				hook.Run("WardenGrantPermission", granter, receiver, Warden.PermissionList[permission].id)
 			end
@@ -346,7 +350,7 @@ if SERVER then
 
 		if IsValid(receiver) and receiver:IsPlayer() then
 			if Warden.Permissions[revoker:SteamID()][permission]["global"] then
-				hook.Run("WardenGrantPermission", revoker, receiver, Warden.PermissionList[permission].id)
+				hook.Run("WardenGrantPermission", revoker, receiver, Warden.PermissionList[permission].id, true)
 			else
 				hook.Run("WardenRevokePermission", revoker, receiver, Warden.PermissionList[permission].id)
 			end
@@ -444,6 +448,14 @@ if SERVER then
 			Warden.SetOwner(ent, self)
 			backupPlyAddCleanup(self, enttype, ent)
 		end
+	end
+
+	function plyMeta:WardenSetAdminLevel(level)
+		if GetConVar("warden_admin_level_needs_admin"):GetBool() and not self:IsAdmin() then
+			return
+		end
+
+		self.WardenAdminLevel = level
 	end
 
 	if cleanup then
