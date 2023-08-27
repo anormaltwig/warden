@@ -44,16 +44,12 @@ local worldEntityPermissions = {
 }
 
 local function adminCheck(ply, permission)
-	if GetConVar("warden_admin_level_needs_admin"):GetBool() and not ply:IsAdmin() then
-		return
+	local permLevel = GetConVar("warden_admin_level_" + Warden.PermissionList[permission].id):GetInt()
+	if permLevel < 0 then
+		permLevel = Warden.PermissionList[permission].defaultAdminLevel
 	end
 
-	local permLevel = ply.WardenAdminLevel
-	if not permLevel then
-		permLevel = GetConVar("warden_default_admin_level"):GetInt()
-	end
-
-	return Warden.PermissionList[permission].adminLevel <= permLevel
+	return permLevel <= ply:WardenGetAdminLevel()
 end
 
 function Warden.CheckPermission(ent, checkEnt, permission)
@@ -450,11 +446,20 @@ if SERVER then
 		end
 	end
 
-	function plyMeta:WardenSetAdminLevel(level)
+	function plyMeta:WardenGetAdminLevel()
 		if GetConVar("warden_admin_level_needs_admin"):GetBool() and not self:IsAdmin() then
-			return
+			return 0
 		end
 
+		local adminLevel = self.WardenAdminLevel
+		if not adminLevel then
+			adminLevel = GetConVar("warden_default_admin_level"):GetInt()
+		end
+
+		return adminLevel
+	end
+
+	function plyMeta:WardenSetAdminLevel(level)
 		self.WardenAdminLevel = level
 	end
 

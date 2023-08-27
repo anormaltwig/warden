@@ -16,6 +16,10 @@ function Warden.CreatePermission(id, name, desc, priority, adminLevel)
 
 	Warden.PermissionIDs[id] = index
 
+	if SERVER then
+		CreateConVar("warden_admin_level_" .. id, -1, FCVAR_REPLICATED, "Set the admin level needed for admins to override this permission.", -1, 99)
+	end
+
 	return index
 end
 
@@ -34,29 +38,3 @@ Warden.PERMISSION_TOOL    = Warden.CreatePermission("tool", "Toolgun", "Allows u
 Warden.PERMISSION_USE     = Warden.CreatePermission("use", "Use (E)", "Allows users to sit in your seats, use your wire buttons, etc.", nil, 1)
 Warden.PERMISSION_DAMAGE  = Warden.CreatePermission("damage", "Damage", "Allows users to damage you and your stuff (excluding ACF).", nil, 2)
 
-local function setConVar(index, val)
-	if val < 0 then
-		Warden.PermissionList[index].adminLevel = Warden.PermissionList[index].defaultAdminLevel
-		return
-	end
-
-	Warden.PermissionList[index].adminLevel = val
-end
-
-if SERVER then
-	for k, v in pairs(Warden.PermissionList) do
-		local convar = CreateConVar("warden_admin_level_" .. v.id, -1, FCVAR_REPLICATED, "Set the admin level needed for admins to override this permission.", -1, 3)
-		setConVar(k, convar:GetInt())
-		cvars.AddChangeCallback("warden_admin_level_" .. v.id, function(_, _, val)
-			setConVar(k, val)
-
-			if CurTime() > 1 then
-				print("[WARDEN] Clients won't see this change until they restart.")
-			end
-		end)
-	end
-else
-	for k, v in pairs(Warden.PermissionList) do
-		setConVar(k, GetConVar("warden_admin_level_" .. v.id):GetInt())
-	end
-end
