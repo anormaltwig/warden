@@ -44,7 +44,7 @@ local worldEntityPermissions = {
 }
 
 local function adminCheck(ply, permission)
-	local permLevel = GetConVar("warden_admin_level_" + Warden.PermissionList[permission].id):GetInt()
+	local permLevel = GetConVar("warden_admin_level_" .. Warden.PermissionList[permission].id):GetInt()
 	if permLevel < 0 then
 		permLevel = Warden.PermissionList[permission].defaultAdminLevel
 	end
