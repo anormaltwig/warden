@@ -9,15 +9,6 @@ function Warden.SetupPlayer(plyOrID)
 	end
 end
 
---[[
-function Warden.SetupSteamID(steamid)
-	Warden.Permissions[steamid] = {}
-	for _, id in pairs(Warden.PermissionIDs) do
-		Warden.Permissions[steamid][id] = { global = false }
-	end
-end
---]]
-
 Warden.SteamIDMap = Warden.SteamIDMap or {}
 
 function Warden.GetPlayerFromSteamID(steamid)
@@ -246,22 +237,6 @@ if SERVER then
 		ent:SetNWString("OwnerID", "World")
 		ent:SetNWEntity("OwnerEnt", world)
 	end
-
-	-- Assign all unowned entities to world when map is loaded or cleaned
-	--[[
-	local function assignWorldEntities()
-		for _, ent in pairs(ents.GetAll()) do
-			if not Warden.GetOwner(ent) then
-				Warden.SetOwnerWorld(ent)
-			end
-		end
-	end
-
-	timer.Simple(10, assignWorldEntities)
-	hook.Add("PostCleanupMap", "Warden", function()
-		timer.Simple(0, assignWorldEntities)
-	end)
-	]]
 
 	hook.Add("OnEntityCreated", "Warden", function(ent)
 		timer.Simple(0, function()
