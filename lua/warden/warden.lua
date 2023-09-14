@@ -55,7 +55,7 @@ function Warden.CheckPermission(ent, checkEnt, permission)
 		receiver = ent
 	else
 		local owner = Warden.GetOwner(ent)
-		if IsValid(owner) then
+		if owner then
 			if owner:IsPlayer() then
 				receiver = owner
 			elseif owner:IsWorld() then
