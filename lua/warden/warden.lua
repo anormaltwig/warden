@@ -665,7 +665,7 @@ net.Receive("WardenUpdatePermission", function()
 	local permission = net.ReadUInt(8)
 	local granter = net.ReadEntity()
 
-	if not IsValid(granter) or granter:IsPlayer() then
+	if not IsValid(granter) or not granter:IsPlayer() then
 		return
 	end
 
